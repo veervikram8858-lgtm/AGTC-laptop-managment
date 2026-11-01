@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechLab Institute – Asset Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    .tab-active { border-bottom: 3px solid #2563eb; color: #1d4ed8; font-weight: 700; }
+    .batch-tab-active { background:#2563eb; color:#fff; }
+    .email-missing { background:#fef3c7; border:1px solid #f59e0b; }
+    @media print { .no-print { display:none !important; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans antialiased">
+
+<!-- ═══════════ TOP NAV ═══════════ -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex justify-between items-center h-16">
+      <!-- Brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+          <i data-lucide="laptop" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <span class="font-bold text-base text-slate-900">TechLab Inventory</span>
+          <span class="ml-2 text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">Institute Asset Manager</span>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Laptop · Charger · Student · Issue/Return · Repair</p>
+        </div>
+      </div>
+      <!-- Right: Role switcher + avatar -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-slate-400 ml-1 mr-1"></i>
+          <select id="roleSwitcher" onchange="handleRoleSwitch(this.value)"
+            class="bg-white text-xs font-medium border border-slate-300 rounded px-2 py-1 outline-none">
+            <option value="director.vikram@sample-institute.in">Admin – Vikram Rao</option>
+            <option value="sunita.lab@sample-institute.in">Staff – Sunita Nair (Full)</option>
+            <option value="deepak.lab@sample-institute.in">Staff – Deepak Joshi (Counter)</option>
+            <option value="neha.trainer@sample-institute.in">Staff – Neha Gupta (No Privileges)</option>
+            <option value="aarav.sharma.sample@gmail.com">Student – Aarav Sharma</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+          <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center" id="userAvatar">VR</div>
+          <div class="hidden md:block text-xs">
+            <div class="font-bold text-slate-800" id="userNameH">Director Vikram Rao</div>
+            <div class="text-slate-400" id="userRoleH">Admin</div>
+          </div>
+        </div>
+        <a href="/static/printable_qr_tags.html" target="_blank"
+          class="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 no-print" title="Print QR Tags">
+          <i data-lucide="printer" class="w-5 h-5"></i>
+        </a>
+      </div>
+    </div>
+    <!-- Tab Bar -->
+    <nav class="flex space-x-4 overflow-x-auto text-sm border-t border-slate-100 no-print" id="mainNav">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap tab-active">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+      </button>
+      <button onclick="switchTab('counter')" id="tab-counter"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="scan-line" class="w-4 h-4 text-emerald-500"></i> Fast Issue / Return
+      </button>
+      <button onclick="switchTab('laptops')" id="tab-laptops"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="laptop" class="w-4 h-4"></i> Laptops
+      </button>
+      <button onclick="switchTab('chargers')" id="tab-chargers"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="plug-zap" class="w-4 h-4"></i> Chargers
+      </button>
+      <button onclick="switchTab('students')" id="tab-students"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="users" class="w-4 h-4"></i> Students
+      </button>
+      <button onclick="switchTab('repairs')" id="tab-repairs"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i> Repairs
+      </button>
+      <button onclick="switchTab('movements')" id="tab-movements"
+        class="py-3 px-1 border-b-2 border-transparent text-slate-600 hover:text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="history" class="w-4 h-4"></i> Audit Log
+      </button>
+      <button onclick="switchTab('studentportal')" id="tab-studentportal"
+        class="py-3 px-1 border-b-2 border-transparent text-purple-600 hover:text-purple-700 flex items-center gap-1.5 whitespace-nowrap">
+        <i data-lucide="user-check" class="w-4 h-4"></i> My Portal
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- ═══════════ MAIN CONTENT ═══════════ -->
+<main class="max-w-7xl mx-auto p-4 sm:p-6">
+
+  <!-- ───── DASHBOARD ───── -->
+  <section id="view-dashboard" class="space-y-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase">Total Laptops</p>
+        <p class="text-2xl font-bold mt-1" id="dTL">--</p>
+      </div>
+      <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
+        <p class="text-[11px] font-semibold text-emerald-700 uppercase">Available</p>
+        <p class="text-2xl font-bold text-emerald-600 mt-1" id="dAL">--</p>
+      </div>
+      <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm">
+        <p class="text-[11px] font-semibold text-blue-700 uppercase">Issued</p>
+        <p class="text-2xl font-bold text-blue-600 mt-1" id="dIL">--</p>
+      </div>
+      <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
+        <p class="text-[11px] font-semibold text-amber-700 uppercase">Under Repair</p>
+        <p class="text-2xl font-bold text-amber-600 mt-1" id="dRL">--</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-[11px] font-semibold text-slate-500 uppercase">Chargers Free</p>
+        <p class="text-2xl font-bold mt-1" id="dAC">--</p>
+        <p class="text-[10px] text-slate-400" id="dTC">of -- total</p>
+      </div>
+      <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm">
+        <p class="text-[11px] font-semibold text-rose-700 uppercase">Repair Spend</p>
+        <p class="text-2xl font-bold text-rose-600 mt-1" id="dRS">₹0</p>
+      </div>
+    </div>
+    <!-- Pending ack banner -->
+    <div id="pendingAckBanner" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i data-lucide="bell" class="w-6 h-6 text-amber-600"></i>
+        <div>
+          <p class="text-sm font-bold text-amber-900">⚠ <span id="pendingAckCount">0</span> student acknowledgements pending</p>
+          <p class="text-xs text-amber-700">Issued laptops waiting for student confirmation</p>
+        </div>
+      </div>
+      <button onclick="switchTab('movements')" class="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg">View Logs</button>
+    </div>
+    <!-- Quick actions + recent feed -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg flex flex-col">
+        <p class="text-xs font-bold uppercase text-blue-200">Fast Counter Workflow</p>
+        <h3 class="text-xl font-bold mt-1">Issue & Return</h3>
+        <p class="text-xs text-blue-100 mt-2">Scan student QR → Scan laptop QR → 2 seconds done.</p>
+        <div class="mt-6 flex gap-3">
+          <button onclick="startFastAction('ISSUE')"
+            class="flex-1 py-3 bg-white text-blue-700 font-bold rounded-xl text-sm flex items-center justify-center gap-1">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Issue
+          </button>
+          <button onclick="startFastAction('RETURN')"
+            class="flex-1 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-1">
+            <i data-lucide="log-in" class="w-4 h-4"></i> Return
+          </button>
+        </div>
+      </div>
+      <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i> Recent Transactions
+          </h3>
+          <button onclick="switchTab('movements')" class="text-xs text-blue-600 hover:underline">Full Log →</button>
+        </div>
+        <div id="dashFeed" class="divide-y divide-slate-100 text-xs text-slate-500">
+          <div class="py-3 text-center">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── FAST ISSUE / RETURN COUNTER ───── -->
+  <section id="view-counter" class="hidden max-w-2xl mx-auto space-y-5">
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-md">
+      <!-- Mode toggle -->
+      <div class="flex p-1 bg-slate-100 rounded-xl mb-6">
+        <button id="modeBtnIssue" onclick="setCounterMode('ISSUE')"
+          class="flex-1 py-3 rounded-lg font-bold text-sm bg-blue-600 text-white flex items-center justify-center gap-2">
+          <i data-lucide="log-out" class="w-4 h-4"></i> ISSUE LAPTOP
+        </button>
+        <button id="modeBtnReturn" onclick="setCounterMode('RETURN')"
+          class="flex-1 py-3 rounded-lg font-bold text-sm text-slate-600 flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i> RETURN LAPTOP
+        </button>
+      </div>
+
+      <!-- Step 1: Person (Issue only) -->
+      <div id="counterPersonSection" class="space-y-3 mb-5">
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold">1</span>
+            Recipient
+          </label>
+          <div class="flex gap-3 text-xs">
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="radio" name="pType" value="Student" checked onchange="togglePType('Student')"> Student
+            </label>
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="radio" name="pType" value="Staff" onchange="togglePType('Staff')"> Staff
+            </label>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <input type="text" id="cPersonInput"
+              placeholder="Type name / ID, or Scan QR (e.g. STU-EVE-01)"
+              oninput="handlePersonSearch(this.value)"
+              class="w-full text-sm border border-slate-300 rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-blue-500 outline-none">
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+          </div>
+          <button onclick="openCam('person')"
+            class="px-3 py-2 bg-slate-100 border border-slate-300 rounded-xl text-xs font-medium flex items-center gap-1 hover:bg-slate-200">
+            <i data-lucide="qr-code" class="w-4 h-4 text-blue-600"></i> Scan
+          </button>
+        </div>
+        <!-- Live search dropdown -->
+        <div id="personDropdown" class="hidden bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto text-xs divide-y divide-slate-100"></div>
+        <!-- Selected person chip -->
+        <div id="cPersonChip" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex justify-between items-center text-xs">
+          <div>
+            <span class="font-bold text-emerald-900" id="cPersonName">--</span>
+            <span class="ml-2 font-mono text-emerald-700" id="cPersonId">--</span>
+            <span class="ml-2 text-emerald-600" id="cPersonBatch">--</span>
+          </div>
+          <button onclick="clearPerson()" class="text-emerald-600 hover:text-red-600 font-bold ml-2">✕</button>
+        </div>
+
+        <!-- Dynamic email input – shows only when student has no Gmail set -->
+        <div id="emailPromptBox" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-2">
+          <p class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i data-lucide="mail-warning" class="w-4 h-4"></i>
+            Email not set for this student — enter it now to save permanently
+          </p>
+          <input type="email" id="dynamicEmailInput" placeholder="e.g. nidhi@gmail.com"
+            class="w-full text-xs border border-amber-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-amber-400">
+          <p class="text-[10px] text-amber-700">This email will be saved to the student's record and used for future acknowledgements.</p>
+        </div>
+      </div>
+
+      <!-- Step 2: Laptop -->
+      <div class="space-y-3 mb-5">
+        <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-bold">2</span>
+          Laptop Device
+        </label>
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <input type="text" id="cLaptopInput"
+              placeholder="Scan Laptop QR or type ID (e.g. LAP-001)…"
+              class="w-full text-sm border border-slate-300 rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-blue-500 outline-none">
+            <i data-lucide="laptop" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+          </div>
+          <button onclick="openCam('laptop')"
+            class="px-3 py-2 bg-slate-100 border border-slate-300 rounded-xl text-xs font-medium flex items-center gap-1 hover:bg-slate-200">
+            <i data-lucide="qr-code" class="w-4 h-4 text-blue-600"></i> Scan
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Options -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-5 space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+            <input type="checkbox" id="cIncCharger" checked class="w-4 h-4 rounded text-blue-600"> Include Charger
+          </label>
+          <span class="text-[11px] text-slate-400">Auto-pairs available charger</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Condition</label>
+            <select id="cCondition" class="w-full border border-slate-300 rounded-lg p-2 bg-white text-xs">
+              <option value="Good">Good</option>
+              <option value="Excellent">Excellent</option>
+              <option value="Fair">Fair</option>
+              <option value="Damaged">Damaged</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Purpose</label>
+            <input type="text" id="cPurpose" value="Daily Lab Session" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+        </div>
+        <div id="cAckBox" class="flex items-center gap-2 pt-2 border-t border-slate-200">
+          <input type="checkbox" id="cAck" class="w-4 h-4 rounded text-emerald-600">
+          <label for="cAck" class="text-xs text-slate-600">
+            Student is present & confirmed receipt at counter (Acknowledge immediately)
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button id="cSubmitBtn" onclick="submitCounter()"
+        class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base rounded-xl shadow-lg flex items-center justify-center gap-2">
+        <i data-lucide="check-circle" class="w-5 h-5"></i>
+        <span id="cSubmitLabel">CONFIRM ISSUE</span>
+      </button>
+    </div>
+
+    <!-- Result toast -->
+    <div id="cResult" class="hidden p-4 rounded-xl border flex items-center justify-between text-sm shadow">
+      <div class="flex items-center gap-3">
+        <div id="cResultIcon" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-base"></div>
+        <div>
+          <div class="font-bold" id="cResultTitle"></div>
+          <div class="text-xs text-slate-500" id="cResultMsg"></div>
+        </div>
+      </div>
+      <button onclick="document.getElementById('cResult').classList.add('hidden')" class="text-xs px-2 py-1 bg-white/40 rounded font-semibold">✕</button>
+    </div>
+  </section>
+
+  <!-- ───── LAPTOPS ───── -->
+  <section id="view-laptops" class="hidden space-y-5">
+    <div class="flex flex-col sm:flex-row justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200">
+      <div class="flex gap-2 flex-1">
+        <div class="relative flex-1 max-w-sm">
+          <input type="text" id="lapSearch" oninput="loadLaptops()" placeholder="Search ID, brand, serial…"
+            class="w-full text-xs border border-slate-300 rounded-lg pl-8 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2 top-2.5"></i>
+        </div>
+        <select id="lapFilter" onchange="loadLaptops()" class="text-xs border border-slate-300 rounded-lg px-3 py-2 bg-white">
+          <option value="All">All Statuses</option>
+          <option value="Available">Available</option>
+          <option value="Issued">Issued</option>
+          <option value="Under Repair">Under Repair</option>
+        </select>
+      </div>
+      <button onclick="openAddLaptopModal()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow">
+        <i data-lucide="plus" class="w-4 h-4"></i> Add Laptop
+      </button>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 text-slate-500 font-semibold border-b">
+          <tr>
+            <th class="p-3">Laptop ID</th><th class="p-3">Tag / S/N</th><th class="p-3">Brand & Model</th>
+            <th class="p-3">Status</th><th class="p-3">Condition</th><th class="p-3">Holder</th>
+            <th class="p-3">Location</th><th class="p-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="lapTbody" class="divide-y divide-slate-100">
+          <tr><td colspan="8" class="p-4 text-center text-slate-400">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───── CHARGERS ───── -->
+  <section id="view-chargers" class="hidden space-y-5">
+    <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-sm">Chargers & Accessories</h3>
+        <p class="text-xs text-slate-400">Power adapters paired with laptops or in spare inventory</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 text-slate-500 font-semibold border-b">
+          <tr>
+            <th class="p-3">ID</th><th class="p-3">Type</th><th class="p-3">Specification</th>
+            <th class="p-3">S/N</th><th class="p-3">Status</th><th class="p-3">Condition</th>
+            <th class="p-3">Holder</th><th class="p-3">Location</th>
+          </tr>
+        </thead>
+        <tbody id="chgTbody" class="divide-y divide-slate-100">
+          <tr><td colspan="8" class="p-4 text-center text-slate-400">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───── STUDENTS ───── -->
+  <section id="view-students" class="hidden space-y-5">
+    <!-- Batch Filter Tabs -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-4 border-b border-slate-100">
+        <div class="flex gap-2 flex-wrap" id="batchTabs">
+          <button onclick="setBatchFilter('All')" id="btAll"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-600 batch-tab-active">All</button>
+          <button onclick="setBatchFilter('Evening Batch')" id="btEvening"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 text-slate-600 hover:border-blue-400">Evening Batch</button>
+          <button onclick="setBatchFilter('Morning Batch')" id="btMorning"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 text-slate-600 hover:border-blue-400">Morning Batch</button>
+          <button onclick="setBatchFilter('Weekend Batch')" id="btWeekend"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 text-slate-600 hover:border-blue-400">Weekend Batch</button>
+        </div>
+        <div class="flex gap-2">
+          <div class="relative">
+            <input type="text" id="stuSearch" oninput="loadStudents()" placeholder="Search name / ID…"
+              class="text-xs border border-slate-300 rounded-lg pl-8 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 w-48">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2 top-2.5"></i>
+          </div>
+          <button onclick="openAddStudentModal()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Student
+          </button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="px-4 py-2 bg-amber-50 border-b border-amber-100 text-[11px] text-amber-800 flex items-center gap-2">
+        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+        <span>Students highlighted in <b>yellow</b> have no Gmail linked yet. Click <b>"Set Email"</b> to add it.</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-50 text-slate-500 font-semibold border-b">
+            <tr>
+              <th class="p-3">Student ID</th><th class="p-3">Name</th><th class="p-3">Gmail</th>
+              <th class="p-3">Course</th><th class="p-3">Batch</th><th class="p-3">Status</th>
+              <th class="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="stuTbody" class="divide-y divide-slate-100">
+            <tr><td colspan="7" class="p-4 text-center text-slate-400">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── REPAIRS ───── -->
+  <section id="view-repairs" class="hidden space-y-5">
+    <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+      <div>
+        <h3 class="font-bold text-sm">Repair & Service Centre Tracker</h3>
+        <p class="text-xs text-slate-400">Device repairs, job sheets, and expense auditing</p>
+      </div>
+      <button onclick="openRepairModal()"
+        class="px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow">
+        <i data-lucide="wrench" class="w-4 h-4"></i> Send for Repair
+      </button>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 text-slate-500 font-semibold border-b">
+          <tr>
+            <th class="p-3">Repair ID</th><th class="p-3">Asset</th><th class="p-3">Reason</th>
+            <th class="p-3">Service Centre</th><th class="p-3">Out Date</th>
+            <th class="p-3">Status</th><th class="p-3">Cost (₹)</th>
+            <th class="p-3">Job Sheet</th><th class="p-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody id="repTbody" class="divide-y divide-slate-100">
+          <tr><td colspan="9" class="p-4 text-center text-slate-400">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───── AUDIT LOG ───── -->
+  <section id="view-movements" class="hidden space-y-5">
+    <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+      <select id="movFilter" onchange="loadMovements()" class="text-xs border border-slate-300 rounded-lg px-3 py-2 bg-white">
+        <option value="All">All Actions</option>
+        <option value="ISSUE">ISSUE</option><option value="RETURN">RETURN</option>
+        <option value="REPAIR_OUT">REPAIR_OUT</option><option value="REPAIR_RETURN">REPAIR_RETURN</option>
+      </select>
+      <a href="/api/reports/movement-csv"
+        class="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow">
+        <i data-lucide="download" class="w-4 h-4"></i> Export CSV
+      </a>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-50 text-slate-500 font-semibold border-b">
+          <tr>
+            <th class="p-3">Movement ID</th><th class="p-3">Action</th><th class="p-3">Asset</th>
+            <th class="p-3">Person</th><th class="p-3">Batch</th>
+            <th class="p-3">Operator</th><th class="p-3">Timestamp</th><th class="p-3">Ack</th>
+          </tr>
+        </thead>
+        <tbody id="movTbody" class="divide-y divide-slate-100">
+          <tr><td colspan="8" class="p-4 text-center text-slate-400">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───── STUDENT PORTAL ───── -->
+  <section id="view-studentportal" class="hidden max-w-3xl mx-auto space-y-6">
+    <div class="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex justify-between items-center">
+      <div>
+        <p class="text-xs font-bold uppercase text-purple-200">Student Self-Service Portal</p>
+        <h2 class="text-2xl font-bold mt-1" id="portalName">--</h2>
+        <p class="text-xs text-purple-100 mt-1" id="portalMeta">--</p>
+      </div>
+      <i data-lucide="user-check" class="w-12 h-12 text-white/60"></i>
+    </div>
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+        <i data-lucide="laptop" class="w-4 h-4 text-purple-600"></i> My Assigned Devices
+      </h3>
+      <div id="portalAssets" class="text-xs text-slate-400 text-center py-4">Checking…</div>
+    </div>
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="font-bold text-sm mb-3 flex items-center gap-2">
+        <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i> Acknowledge Receipt
+      </h3>
+      <p class="text-xs text-slate-500 mb-4">Confirm that you physically received the listed device in working order.</p>
+      <div id="portalPending" class="text-xs text-slate-400 text-center py-4">No pending acknowledgements.</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Camera Scanner -->
+<div id="camModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm flex items-center gap-2">
+        <i data-lucide="camera" class="w-4 h-4 text-blue-600"></i> Scan QR Code
+      </h3>
+      <button onclick="closeCam()" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+    </div>
+    <div id="qrReader" class="w-full rounded-xl overflow-hidden border border-slate-200"></div>
+    <p class="text-xs text-center text-slate-400">Hold QR code steady in front of camera</p>
+  </div>
+</div>
+
+<!-- Set Email Modal -->
+<div id="setEmailModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm">Set Gmail for Student</h3>
+      <button onclick="closeSetEmail()" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+    </div>
+    <div class="text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+      Student: <b id="setEmailStuName">--</b> (<span class="font-mono" id="setEmailStuId">--</span>)
+    </div>
+    <div>
+      <label class="text-xs font-semibold text-slate-700 block mb-1">Registered Gmail *</label>
+      <input type="email" id="setEmailInput" placeholder="e.g. nidhi@gmail.com"
+        class="w-full text-xs border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeSetEmail()" class="px-4 py-2 border rounded-lg text-xs font-semibold">Cancel</button>
+      <button onclick="submitSetEmail()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold">Save Gmail</button>
+    </div>
+  </div>
+</div>
+
+<!-- Batch Transfer Modal -->
+<div id="batchModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm">Transfer Batch</h3>
+      <button onclick="closeBatchModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div class="text-xs bg-slate-50 p-3 rounded-xl border space-y-1">
+      <div>Student: <b id="bsName">--</b> (<span id="bsId">--</span>)</div>
+      <div>Current: <b id="bsCurrent">--</b></div>
+      <div class="text-[10px] text-blue-600">Student_ID stays permanently the same.</div>
+    </div>
+    <div>
+      <label class="text-xs font-semibold text-slate-700 block mb-1">New Batch</label>
+      <input type="text" id="bsNewBatch" placeholder="e.g. Evening Batch"
+        class="w-full text-xs border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div>
+      <label class="text-xs font-semibold text-slate-700 block mb-1">Reason</label>
+      <input type="text" id="bsReason" placeholder="e.g. Student requested time change"
+        class="w-full text-xs border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeBatchModal()" class="px-4 py-2 border rounded-lg text-xs font-semibold">Cancel</button>
+      <button onclick="submitBatchTransfer()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold">Confirm Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Send to Repair Modal -->
+<div id="repairModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm flex items-center gap-2">
+        <i data-lucide="wrench" class="w-4 h-4 text-amber-600"></i> Send for Repair
+      </h3>
+      <button onclick="closeRepairModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-xs">
+      <div>
+        <label class="block font-semibold mb-1">Asset ID *</label>
+        <input type="text" id="rpAssetId" placeholder="LAP-005 or CHG-003" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+      <div>
+        <label class="block font-semibold mb-1">Asset Type</label>
+        <select id="rpType" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+          <option value="Laptop">Laptop</option><option value="Charger">Charger</option>
+        </select>
+      </div>
+    </div>
+    <div class="text-xs">
+      <label class="block font-semibold mb-1">Fault Description *</label>
+      <textarea id="rpReason" rows="2" placeholder="e.g. Screen flickering, loose hinge…"
+        class="w-full border border-slate-300 rounded-lg p-2"></textarea>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-xs">
+      <div>
+        <label class="block font-semibold mb-1">Service Centre</label>
+        <input type="text" id="rpCentre" value="Authorized Service Centre" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+      <div>
+        <label class="block font-semibold mb-1">Technician</label>
+        <input type="text" id="rpTech" placeholder="e.g. Ramesh Kumar" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+      <div>
+        <label class="block font-semibold mb-1">Estimated Cost (₹)</label>
+        <input type="number" id="rpCost" value="0" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+      <div>
+        <label class="block font-semibold mb-1">Job Sheet Link</label>
+        <input type="text" id="rpReceipt" placeholder="https://drive.google.com/…" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeRepairModal()" class="px-4 py-2 border rounded-lg text-xs font-semibold">Cancel</button>
+      <button onclick="submitRepair()" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold">Dispatch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Repair Modal -->
+<div id="completeRepairModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm">Return from Repair</h3>
+      <button onclick="closeCompleteRepairModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div class="text-xs bg-slate-50 p-3 rounded-lg border">Repair ID: <b id="crId">--</b></div>
+    <div class="text-xs space-y-3">
+      <div>
+        <label class="block font-semibold mb-1">Final Cost (₹)</label>
+        <input type="number" id="crCost" value="0" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+      <div>
+        <label class="block font-semibold mb-1">Condition After Repair</label>
+        <select id="crCond" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+          <option value="Good">Good</option><option value="Excellent">Excellent</option><option value="Fair">Fair</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-semibold mb-1">Final Receipt Link</label>
+        <input type="text" id="crReceipt" placeholder="https://drive.google.com/…" class="w-full border border-slate-300 rounded-lg p-2">
+      </div>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeCompleteRepairModal()" class="px-4 py-2 border rounded-lg text-xs font-semibold">Cancel</button>
+      <button onclick="submitCompleteRepair()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold">Mark Returned</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Student Modal -->
+<div id="addStuModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm">Add New Student</h3>
+      <button onclick="closeAddStuModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div class="space-y-3 text-xs">
+      <div><label class="block font-semibold mb-1">Student ID *</label>
+        <input type="text" id="nStuId" placeholder="e.g. STU-MOR-19" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div><label class="block font-semibold mb-1">Full Name *</label>
+        <input type="text" id="nStuName" placeholder="e.g. Riya Sharma" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div><label class="block font-semibold mb-1">Gmail (optional – can be added later)</label>
+        <input type="email" id="nStuEmail" placeholder="Leave blank if not known yet" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div><label class="block font-semibold mb-1">Course</label>
+        <input type="text" id="nStuCourse" value="Computer Training" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div><label class="block font-semibold mb-1">Batch</label>
+        <select id="nStuBatch" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+          <option value="Evening Batch">Evening Batch</option>
+          <option value="Morning Batch">Morning Batch</option>
+          <option value="Weekend Batch">Weekend Batch</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeAddStuModal()" class="px-4 py-2 border rounded-lg text-xs font-semibold">Cancel</button>
+      <button onclick="submitAddStudent()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold">Save Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Laptop Modal -->
+<div id="addLapModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="font-bold text-sm">Add New Laptop</h3>
+      <button onclick="closeAddLaptopModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div class="space-y-3 text-xs">
+      <div><label class="block font-semibold mb-1">Laptop ID *</label>
+        <input type="text" id="nLapId" placeholder="LAP-007" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div><label class="block font-semibold mb-1">Asset Tag *</label>
+        <input type="text" id="nLapTag" placeholder="TAG-LEN-03" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div><label class="block font-semibold mb-1">Serial Number *</label>
+        <input type="text" id="nLapSerial" placeholder="PF2K9903" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="block font-semibold mb-1">Brand</label>
+          <input type="text" id="nLapBrand" value="Lenovo" class="w-full border border-slate-300 rounded-lg p-2"></div>
+        <div><label class="block font-semibold mb-1">Model</label>
+          <input type="text" id="nLapModel" value="ThinkPad L14" class="w-full border border-slate-300 rounded-lg p-2"></div>
+      </div>
+      <div><label class="block font-semibold mb-1">Location</label>
+        <input type="text" id="nLapLoc" value="Lab 1 Cabinet A" class="w-full border border-slate-300 rounded-lg p-2"></div>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeAddLaptopModal()" class="px-4 py-2 border rounded-lg text-xs font-semibold">Cancel</button>
+      <button onclick="submitAddLaptop()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold">Save Laptop</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ JAVASCRIPT ═══════════ -->
+<script>
+let currentUser = null;
+let counterMode = 'ISSUE';
+let html5Qr = null;
+let camTarget = null;
+let selectedPerson = null; // { id, name, batch, email }
+let selectedEmailStu = null;
+let selectedBatchStu = null;
+let activeRepairId = null;
+let currentBatchFilter = 'All';
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', async () => {
+  lucide.createIcons();
+  await fetchUser();
+  loadDashboard();
+});
+
+async function fetchUser() {
+  try {
+    const r = await fetch('/api/auth/me');
+    currentUser = await r.json();
+    document.getElementById('userNameH').textContent = currentUser.name;
+    document.getElementById('userRoleH').textContent = currentUser.role;
+    document.getElementById('userAvatar').textContent =
+      currentUser.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    const isStudent = currentUser.role === 'Student';
+    ['tab-students','tab-repairs','tab-counter'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = isStudent ? 'none' : '';
+    });
+    if(isStudent) { switchTab('studentportal'); loadStudentPortal(); }
+  } catch(e) { console.error(e); }
+}
+
+async function handleRoleSwitch(email) {
+  await fetch(`/api/auth/switch-demo-role?email=${encodeURIComponent(email)}`, {method:'POST'});
+  await fetchUser();
+  if(currentUser.role === 'Student') { switchTab('studentportal'); loadStudentPortal(); }
+  else { switchTab('dashboard'); }
+}
+
+// ── TAB SWITCHING ──
+function switchTab(id) {
+  const all = ['dashboard','counter','laptops','chargers','students','repairs','movements','studentportal'];
+  all.forEach(t => {
+    const v = document.getElementById('view-'+t);
+    const b = document.getElementById('tab-'+t);
+    if(v) v.classList.toggle('hidden', t!==id);
+    if(b) { b.classList.toggle('tab-active', t===id); b.classList.toggle('border-transparent', t!==id); }
+  });
+  const loaders = {
+    dashboard: loadDashboard, laptops: loadLaptops, chargers: loadChargers,
+    students: loadStudents, repairs: loadRepairs, movements: loadMovements,
+    studentportal: loadStudentPortal
+  };
+  if(loaders[id]) loaders[id]();
+  lucide.createIcons();
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  try {
+    const d = await (await fetch('/api/dashboard/stats')).json();
+    document.getElementById('dTL').textContent = d.total_laptops;
+    document.getElementById('dAL').textContent = d.available_laptops;
+    document.getElementById('dIL').textContent = d.issued_laptops;
+    document.getElementById('dRL').textContent = d.under_repair_laptops;
+    document.getElementById('dAC').textContent = d.available_chargers;
+    document.getElementById('dTC').textContent = `of ${d.total_chargers} total`;
+    document.getElementById('dRS').textContent = `₹${(d.total_repair_spend_inr||0).toLocaleString('en-IN')}`;
+    const banner = document.getElementById('pendingAckBanner');
+    if(d.pending_student_acknowledgements > 0) {
+      banner.classList.remove('hidden');
+      document.getElementById('pendingAckCount').textContent = d.pending_student_acknowledgements;
+    } else banner.classList.add('hidden');
+    // Feed
+    const logs = await (await fetch('/api/movement/logs')).json();
+    const feed = document.getElementById('dashFeed');
+    if(!logs.length) { feed.innerHTML='<div class="py-3 text-center">No transactions yet.</div>'; return; }
+    feed.innerHTML = logs.slice(0,6).map(l=>`
+      <div class="py-2 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] ${actionBadge(l.Action)}">${l.Action}</span>
+          <b class="text-slate-800">${l.Asset_ID}</b>
+          <span class="text-slate-400">→</span>
+          <span>${l.Person_Name_At_Transaction||l.Person_ID}</span>
+        </div>
+        <span class="text-slate-400 font-mono">${fmtDate(l.Event_Timestamp)}</span>
+      </div>`).join('');
+  } catch(e){ console.error(e); }
+}
+
+// ── FAST COUNTER ──
+function startFastAction(mode) { switchTab('counter'); setCounterMode(mode); }
+
+function setCounterMode(mode) {
+  counterMode = mode;
+  const iBtn = document.getElementById('modeBtnIssue');
+  const rBtn = document.getElementById('modeBtnReturn');
+  const ps = document.getElementById('counterPersonSection');
+  const ackBox = document.getElementById('cAckBox');
+  const lbl = document.getElementById('cSubmitLabel');
+  const submitBtn = document.getElementById('cSubmitBtn');
+  if(mode==='ISSUE') {
+    iBtn.className='flex-1 py-3 rounded-lg font-bold text-sm bg-blue-600 text-white flex items-center justify-center gap-2';
+    rBtn.className='flex-1 py-3 rounded-lg font-bold text-sm text-slate-600 flex items-center justify-center gap-2';
+    ps.classList.remove('hidden'); ackBox.classList.remove('hidden');
+    lbl.textContent='CONFIRM ISSUE';
+    submitBtn.className='w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base rounded-xl shadow-lg flex items-center justify-center gap-2';
+  } else {
+    rBtn.className='flex-1 py-3 rounded-lg font-bold text-sm bg-blue-600 text-white flex items-center justify-center gap-2';
+    iBtn.className='flex-1 py-3 rounded-lg font-bold text-sm text-slate-600 flex items-center justify-center gap-2';
+    ps.classList.add('hidden'); ackBox.classList.add('hidden');
+    lbl.textContent='CONFIRM RETURN';
+    submitBtn.className='w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base rounded-xl shadow-lg flex items-center justify-center gap-2';
+  }
+}
+
+function togglePType(type) {
+  document.getElementById('cPersonInput').placeholder =
+    type==='Student' ? 'Type name / ID, or Scan QR (e.g. STU-EVE-01)' : 'Scan Staff QR or type ID (e.g. STAFF-02)';
+}
+
+async function handlePersonSearch(query) {
+  const dd = document.getElementById('personDropdown');
+  if(!query || query.length < 2) { dd.classList.add('hidden'); return; }
+  const pType = document.querySelector('input[name="pType"]:checked').value;
+  const url = pType==='Student' ? `/api/students?search=${encodeURIComponent(query)}` : `/api/staff?search=${encodeURIComponent(query)}`;
+  try {
+    const list = await (await fetch(url)).json();
+    if(!list.length) { dd.classList.add('hidden'); return; }
+    dd.classList.remove('hidden');
+    dd.innerHTML = list.slice(0,8).map(s => {
+      const id = s.Student_ID||s.Staff_ID;
+      const name = s.Student_Name||s.Staff_Name;
+      const batch = s.Batch_Name||s.Role||'';
+      const email = s.Registered_Gmail||s.Official_Gmail||'';
+      return `<div onclick="selectPerson('${id}','${name.replace(/'/g,"\\'")}','${batch}','${email.replace(/'/g,"\\'")}','${pType}')"
+        class="p-2.5 hover:bg-blue-50 cursor-pointer flex justify-between items-center">
+        <div>
+          <span class="font-semibold text-slate-800">${name}</span>
+          <span class="ml-2 font-mono text-slate-400 text-[10px]">${id}</span>
+        </div>
+        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">${batch}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { dd.classList.add('hidden'); }
+}
+
+function selectPerson(id, name, batch, email, pType) {
+  selectedPerson = {id, name, batch, email, pType};
+  document.getElementById('personDropdown').classList.add('hidden');
+  document.getElementById('cPersonInput').value = '';
+  const chip = document.getElementById('cPersonChip');
+  chip.classList.remove('hidden');
+  document.getElementById('cPersonName').textContent = name;
+  document.getElementById('cPersonId').textContent = id;
+  document.getElementById('cPersonBatch').textContent = batch;
+
+  // Show email prompt if missing
+  const epBox = document.getElementById('emailPromptBox');
+  if(!email && pType==='Student') { epBox.classList.remove('hidden'); document.getElementById('dynamicEmailInput').value=''; }
+  else epBox.classList.add('hidden');
+}
+
+function clearPerson() {
+  selectedPerson = null;
+  document.getElementById('cPersonChip').classList.add('hidden');
+  document.getElementById('emailPromptBox').classList.add('hidden');
+  document.getElementById('cPersonInput').value = '';
+}
+
+async function submitCounter() {
+  const laptopId = document.getElementById('cLaptopInput').value.trim();
+  const incCharger = document.getElementById('cIncCharger').checked;
+  const condition = document.getElementById('cCondition').value;
+  const purpose = document.getElementById('cPurpose').value;
+  if(!laptopId) { showCounterResult(false,'Error','Please enter or scan the Laptop ID.'); return; }
+  try {
+    if(counterMode==='ISSUE') {
+      if(!selectedPerson) { showCounterResult(false,'Error','Please select a student or staff member.'); return; }
+      const ack = document.getElementById('cAck').checked;
+      const dynEmail = document.getElementById('dynamicEmailInput').value.trim();
+      const body = {
+        person_type: selectedPerson.pType||'Student',
+        person_id: selectedPerson.id,
+        laptop_id: laptopId,
+        include_charger: incCharger,
+        purpose, condition_out: condition,
+        immediate_student_ack: ack,
+        student_email: dynEmail || selectedPerson.email || null
+      };
+      const r = await fetch('/api/movement/issue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.detail||'Issue failed');
+      showCounterResult(true,'✓ Laptop Issued!',`Mov: ${d.movement_id} | To: ${selectedPerson.name}`);
+      document.getElementById('cLaptopInput').value=''; clearPerson();
+    } else {
+      const r = await fetch('/api/movement/return',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({laptop_id:laptopId,condition_in:condition,include_charger:incCharger,notes:purpose})});
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.detail||'Return failed');
+      showCounterResult(true,'✓ Laptop Returned!',`${d.laptop_id} is now Available in Lab.`);
+      document.getElementById('cLaptopInput').value='';
+    }
+  } catch(e) { showCounterResult(false,'Transaction Failed', e.message); }
+}
+
+function showCounterResult(ok, title, msg) {
+  const b = document.getElementById('cResult');
+  const icon = document.getElementById('cResultIcon');
+  b.classList.remove('hidden');
+  b.className = `p-4 rounded-xl border flex items-center justify-between text-sm shadow ${ok?'bg-emerald-50 border-emerald-300 text-emerald-900':'bg-rose-50 border-rose-300 text-rose-900'}`;
+  icon.className = `w-8 h-8 rounded-full flex items-center justify-center font-bold text-base ${ok?'bg-emerald-200 text-emerald-800':'bg-rose-200 text-rose-800'}`;
+  icon.textContent = ok?'✓':'✕';
+  document.getElementById('cResultTitle').textContent = title;
+  document.getElementById('cResultMsg').textContent = msg;
+}
+
+// ── LAPTOPS ──
+async function loadLaptops() {
+  const search = document.getElementById('lapSearch').value;
+  const status = document.getElementById('lapFilter').value;
+  const rows = await (await fetch(`/api/laptops?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`)).json();
+  const tb = document.getElementById('lapTbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="8" class="p-4 text-center text-slate-400">No laptops found.</td></tr>';return;}
+  tb.innerHTML = rows.map(l=>`
+    <tr class="hover:bg-slate-50">
+      <td class="p-3 font-mono font-bold">${l.Laptop_ID}</td>
+      <td class="p-3">${l.Asset_Tag}<div class="text-[10px] text-slate-400 font-mono">${l.Serial_Number}</div></td>
+      <td class="p-3 font-medium">${l.Brand} ${l.Model}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${statusBadge(l.Status)}">${l.Status}</span></td>
+      <td class="p-3">${l.Condition}</td>
+      <td class="p-3">${l.Current_Holder_ID||'<span class="text-slate-400">None</span>'}
+        <div class="text-[10px] text-slate-400">${l.Current_Holder_Type!=='None'?l.Current_Holder_Type:''}</div></td>
+      <td class="p-3 text-slate-500">${l.Current_Location}</td>
+      <td class="p-3 text-right flex gap-2 justify-end">
+        ${l.Status==='Available'?`<button onclick="quickIssue('${l.Laptop_ID}')" class="text-blue-600 hover:underline font-bold">Issue</button>`:''}
+        ${l.Status==='Issued'?`<button onclick="quickReturn('${l.Laptop_ID}')" class="text-emerald-600 hover:underline font-bold">Return</button>`:''}
+        ${l.Status==='Available'?`<button onclick="quickRepair('${l.Laptop_ID}')" class="text-amber-600 hover:underline font-bold">Repair</button>`:''}
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+function quickIssue(id){document.getElementById('cLaptopInput').value=id; startFastAction('ISSUE');}
+function quickReturn(id){document.getElementById('cLaptopInput').value=id; startFastAction('RETURN');}
+function quickRepair(id){document.getElementById('rpAssetId').value=id; openRepairModal();}
+
+// ── CHARGERS ──
+async function loadChargers() {
+  const rows = await (await fetch('/api/accessories')).json();
+  const tb = document.getElementById('chgTbody');
+  tb.innerHTML = rows.map(a=>`
+    <tr class="hover:bg-slate-50">
+      <td class="p-3 font-mono font-bold">${a.Accessory_ID}</td>
+      <td class="p-3">${a.Asset_Type}</td>
+      <td class="p-3">${a.Specification}</td>
+      <td class="p-3 font-mono text-slate-500">${a.Serial_Number}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${statusBadge(a.Status)}">${a.Status}</span></td>
+      <td class="p-3">${a.Condition}</td>
+      <td class="p-3">${a.Current_Holder_ID||'<span class="text-slate-400">None</span>'}</td>
+      <td class="p-3 text-slate-500">${a.Current_Location}</td>
+    </tr>`).join('');
+}
+
+// ── STUDENTS ──
+let batchFilter = 'All';
+function setBatchFilter(b) {
+  batchFilter = b;
+  const ids = ['All','Evening','Morning','Weekend'];
+  ids.forEach(x => {
+    const el = document.getElementById('bt'+x);
+    if(el) el.className = `px-3 py-1.5 rounded-lg text-xs font-bold border ${
+      (b==='All'&&x==='All')||(b.startsWith(x)&&x!=='All')
+        ? 'border-blue-600 batch-tab-active'
+        : 'border-slate-300 text-slate-600 hover:border-blue-400'}`;
+  });
+  loadStudents();
+}
+
+async function loadStudents() {
+  if(currentUser && currentUser.role==='Student') return;
+  const search = document.getElementById('stuSearch').value;
+  const batch = batchFilter!=='All' ? batchFilter : '';
+  const url = `/api/students?search=${encodeURIComponent(search)}&batch=${encodeURIComponent(batch)}`;
+  try {
+    const r = await fetch(url);
+    if(r.status===403){
+      document.getElementById('stuTbody').innerHTML='<tr><td colspan="7" class="p-4 text-center text-rose-500">Access denied for students.</td></tr>';
+      return;
+    }
+    const rows = await r.json();
+    const tb = document.getElementById('stuTbody');
+    if(!rows.length){tb.innerHTML='<tr><td colspan="7" class="p-4 text-center text-slate-400">No students found.</td></tr>';return;}
+    tb.innerHTML = rows.map(s => {
+      const noEmail = !s.Registered_Gmail;
+      const rowClass = noEmail ? 'email-missing' : 'hover:bg-slate-50';
+      return `<tr class="${rowClass}">
+        <td class="p-3 font-mono font-bold text-slate-900">${s.Student_ID}</td>
+        <td class="p-3 font-medium text-slate-800">${s.Student_Name}</td>
+        <td class="p-3">
+          ${noEmail
+            ? `<span class="text-amber-700 font-bold flex items-center gap-1"><i data-lucide="mail-warning" class="w-3.5 h-3.5"></i> Not Set</span>`
+            : `<span class="font-mono text-slate-500 text-[11px]">${s.Registered_Gmail}</span>`}
+        </td>
+        <td class="p-3 text-slate-600">${s.Course_Name}</td>
+        <td class="p-3">
+          <span class="bg-slate-100 text-slate-700 font-mono px-2 py-0.5 rounded text-[11px] font-semibold">${s.Batch_Name}</span>
+        </td>
+        <td class="p-3">
+          <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${s.Active?'bg-emerald-100 text-emerald-800':'bg-rose-100 text-rose-800'}">${s.Active?'Active':'Inactive'}</span>
+        </td>
+        <td class="p-3 text-right flex gap-2 justify-end items-center">
+          ${noEmail
+            ? `<button onclick="openSetEmail('${s.Student_ID}','${s.Student_Name.replace(/'/g,"\\'")}')
+              class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold rounded-lg flex items-center gap-1">
+              <i data-lucide='mail' class='w-3 h-3'></i> Set Email</button>`
+            : ''}
+          <button onclick="openBatchModal('${s.Student_ID}','${s.Student_Name.replace(/'/g,"\\'")}','${s.Batch_Name}')"
+            class="text-blue-600 hover:underline font-bold text-[11px]">Transfer Batch</button>
+        </td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  } catch(e){ console.error(e); }
+}
+
+// Set Email
+function openSetEmail(id, name) {
+  selectedEmailStu = id;
+  document.getElementById('setEmailStuName').textContent = name;
+  document.getElementById('setEmailStuId').textContent = id;
+  document.getElementById('setEmailInput').value = '';
+  document.getElementById('setEmailModal').classList.remove('hidden');
+}
+function closeSetEmail() { document.getElementById('setEmailModal').classList.add('hidden'); }
+async function submitSetEmail() {
+  const email = document.getElementById('setEmailInput').value.trim();
+  if(!email) { alert('Please enter a valid Gmail address.'); return; }
+  try {
+    const r = await fetch('/api/students/update-email',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({student_id:selectedEmailStu,registered_gmail:email})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert(`✓ Gmail saved for ${d.student_name}`);
+    closeSetEmail(); loadStudents();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+// Batch Transfer
+function openBatchModal(id, name, batch) {
+  selectedBatchStu = id;
+  document.getElementById('bsName').textContent = name;
+  document.getElementById('bsId').textContent = id;
+  document.getElementById('bsCurrent').textContent = batch;
+  document.getElementById('bsNewBatch').value = '';
+  document.getElementById('bsReason').value = '';
+  document.getElementById('batchModal').classList.remove('hidden');
+}
+function closeBatchModal() { document.getElementById('batchModal').classList.add('hidden'); }
+async function submitBatchTransfer() {
+  const nb = document.getElementById('bsNewBatch').value.trim();
+  const reason = document.getElementById('bsReason').value.trim();
+  if(!nb){alert('Please enter the new batch name.');return;}
+  try {
+    const r = await fetch('/api/students/batch-transfer',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({student_id:selectedBatchStu,new_batch:nb,reason})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert(`✓ ${d.student_id} transferred to ${d.new_batch}`);
+    closeBatchModal(); loadStudents();
+  } catch(e){alert('Error: '+e.message);}
+}
+
+// ── ADD STUDENT ──
+function openAddStuModal(){document.getElementById('addStuModal').classList.remove('hidden');}
+function closeAddStuModal(){document.getElementById('addStuModal').classList.add('hidden');}
+async function submitAddStudent() {
+  const id=document.getElementById('nStuId').value.trim();
+  const name=document.getElementById('nStuName').value.trim();
+  const email=document.getElementById('nStuEmail').value.trim();
+  const course=document.getElementById('nStuCourse').value.trim();
+  const batch=document.getElementById('nStuBatch').value;
+  if(!id||!name){alert('Student ID and Name are required.');return;}
+  try {
+    const r=await fetch('/api/students',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({student_id:id,student_name:name,registered_gmail:email||'',course_name:course,batch_name:batch})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert(`✓ Student ${id} added!`);
+    closeAddStuModal(); loadStudents();
+  } catch(e){alert('Error: '+e.message);}
+}
+
+// ── REPAIRS ──
+async function loadRepairs() {
+  const rows = await (await fetch('/api/repairs')).json();
+  const tb = document.getElementById('repTbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="9" class="p-4 text-center text-slate-400">No repair records.</td></tr>';return;}
+  tb.innerHTML = rows.map(r=>`
+    <tr class="hover:bg-slate-50">
+      <td class="p-3 font-mono font-bold">${r.Repair_ID}</td>
+      <td class="p-3 font-bold">${r.Asset_ID}<div class="text-[10px] text-slate-400">${r.Asset_Type}</div></td>
+      <td class="p-3 text-slate-600 max-w-[160px] truncate" title="${r.Repair_Reason}">${r.Repair_Reason}</td>
+      <td class="p-3 text-slate-600">${r.Service_Centre}<div class="text-[10px] text-slate-400">Tech: ${r.Technician}</div></td>
+      <td class="p-3 font-mono text-slate-500">${fmtDate(r.Out_Timestamp)}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${r.Repair_Status==='COMPLETED'?'bg-emerald-100 text-emerald-800':'bg-amber-100 text-amber-800'}">${r.Repair_Status}</span></td>
+      <td class="p-3 font-mono font-semibold">₹${(r.Final_Cost||r.Estimated_Cost||0).toLocaleString('en-IN')}</td>
+      <td class="p-3">${r.Receipt_or_JobSheet_Link?`<a href="${r.Receipt_or_JobSheet_Link}" target="_blank" class="text-blue-600 hover:underline">View</a>`:'<span class="text-slate-400">—</span>'}</td>
+      <td class="p-3 text-right">
+        ${r.Repair_Status!=='COMPLETED'
+          ?`<button onclick="openCompleteRepairModal('${r.Repair_ID}')" class="px-2.5 py-1 bg-emerald-600 text-white rounded font-bold text-[11px]">Return</button>`
+          :'<span class="text-emerald-600 font-bold text-[11px]">Done ✓</span>'}
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+function openRepairModal(){document.getElementById('repairModal').classList.remove('hidden');}
+function closeRepairModal(){document.getElementById('repairModal').classList.add('hidden');}
+async function submitRepair() {
+  const id=document.getElementById('rpAssetId').value.trim();
+  const type=document.getElementById('rpType').value;
+  const reason=document.getElementById('rpReason').value.trim();
+  const centre=document.getElementById('rpCentre').value.trim();
+  const tech=document.getElementById('rpTech').value.trim();
+  const cost=parseFloat(document.getElementById('rpCost').value)||0;
+  const receipt=document.getElementById('rpReceipt').value.trim();
+  if(!id||!reason){alert('Asset ID and Reason are required.');return;}
+  try {
+    const r=await fetch('/api/repairs',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({asset_type:type,asset_id:id,repair_reason:reason,service_centre:centre,technician:tech,estimated_cost:cost,receipt_or_jobsheet_link:receipt})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert(`✓ Repair Ticket: ${d.repair_id}`);
+    closeRepairModal(); loadRepairs(); loadDashboard();
+  } catch(e){alert('Error: '+e.message);}
+}
+
+function openCompleteRepairModal(id){
+  activeRepairId=id;
+  document.getElementById('crId').textContent=id;
+  document.getElementById('completeRepairModal').classList.remove('hidden');
+}
+function closeCompleteRepairModal(){document.getElementById('completeRepairModal').classList.add('hidden');}
+async function submitCompleteRepair() {
+  const cost=parseFloat(document.getElementById('crCost').value)||0;
+  const cond=document.getElementById('crCond').value;
+  const receipt=document.getElementById('crReceipt').value.trim();
+  try {
+    const r=await fetch('/api/repairs/return',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({repair_id:activeRepairId,final_cost:cost,condition_after:cond,receipt_or_jobsheet_link:receipt})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert(`✓ Device restored to Available! Final cost: ₹${cost}`);
+    closeCompleteRepairModal(); loadRepairs(); loadDashboard();
+  } catch(e){alert('Error: '+e.message);}
+}
+
+// ── AUDIT LOG ──
+async function loadMovements() {
+  const action = document.getElementById('movFilter').value;
+  const url = `/api/movement/logs${action!=='All'?'?action='+encodeURIComponent(action):''}`;
+  const rows = await (await fetch(url)).json();
+  const tb = document.getElementById('movTbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="8" class="p-4 text-center text-slate-400">No records.</td></tr>';return;}
+  tb.innerHTML = rows.map(l=>`
+    <tr class="hover:bg-slate-50">
+      <td class="p-3 font-mono text-[11px] text-slate-700">${l.Movement_ID}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded font-mono font-bold text-[10px] ${actionBadge(l.Action)}">${l.Action}</span></td>
+      <td class="p-3 font-bold">${l.Asset_ID} <span class="text-[10px] text-slate-400">(${l.Asset_Type})</span></td>
+      <td class="p-3">${l.Person_Name_At_Transaction||l.Person_ID}</td>
+      <td class="p-3 font-mono text-slate-500 text-[11px]">${l.Batch_At_Transaction||'—'}</td>
+      <td class="p-3 text-slate-500 text-[11px] font-mono">${l.Operator_Staff_Email}</td>
+      <td class="p-3 font-mono text-slate-500 text-[11px]">${fmtDate(l.Event_Timestamp)}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${ackBadge(l.Acknowledgement_Status)}">${l.Acknowledgement_Status}</span></td>
+    </tr>`).join('');
+}
+
+// ── STUDENT PORTAL ──
+async function loadStudentPortal() {
+  if(!currentUser) return;
+  document.getElementById('portalName').textContent = currentUser.name;
+  document.getElementById('portalMeta').textContent = `ID: ${currentUser.id} | ${currentUser.email} | Batch: ${currentUser.batch||'—'}`;
+  // Assigned laptops
+  try {
+    const laps = await (await fetch('/api/laptops')).json();
+    const mine = laps.filter(l=>l.Current_Holder_ID===currentUser.id && l.Status==='Issued');
+    const ad = document.getElementById('portalAssets');
+    if(!mine.length) ad.innerHTML='<div class="text-slate-400 text-center py-4">No laptops currently assigned.</div>';
+    else ad.innerHTML = mine.map(l=>`
+      <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+        <div>
+          <div class="font-bold">${l.Brand} ${l.Model} (${l.Laptop_ID})</div>
+          <div class="text-xs text-slate-400">Tag: ${l.Asset_Tag} | S/N: ${l.Serial_Number} | ${l.Condition}</div>
+        </div>
+        <span class="bg-blue-100 text-blue-800 font-bold text-xs px-2.5 py-1 rounded-full">In Custody</span>
+      </div>`).join('');
+  } catch(e){}
+  // Pending acks
+  try {
+    const movs = await (await fetch('/api/movement/logs')).json();
+    const pending = movs.filter(m=>m.Acknowledgement_Status==='PENDING');
+    const pd = document.getElementById('portalPending');
+    if(!pending.length) pd.innerHTML='<div class="text-slate-400 text-center py-4">All receipts acknowledged ✓</div>';
+    else pd.innerHTML = pending.map(p=>`
+      <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center">
+        <div>
+          <div class="font-bold text-amber-900">${p.Asset_Type}: ${p.Asset_ID}</div>
+          <div class="text-xs text-amber-700">Issued at ${fmtDate(p.Event_Timestamp)} by ${p.Operator_Staff_Email}</div>
+        </div>
+        <button onclick="ackMovement('${p.Movement_ID}')"
+          class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow">Acknowledge</button>
+      </div>`).join('');
+  } catch(e){}
+}
+
+async function ackMovement(id) {
+  try {
+    const r=await fetch('/api/movement/acknowledge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({movement_id:id})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert('Receipt confirmed!'); loadStudentPortal();
+  } catch(e){alert('Error: '+e.message);}
+}
+
+// ── ADD LAPTOP ──
+function openAddLaptopModal(){document.getElementById('addLapModal').classList.remove('hidden');}
+function closeAddLaptopModal(){document.getElementById('addLapModal').classList.add('hidden');}
+async function submitAddLaptop() {
+  const id=document.getElementById('nLapId').value.trim();
+  const tag=document.getElementById('nLapTag').value.trim();
+  const sn=document.getElementById('nLapSerial').value.trim();
+  const brand=document.getElementById('nLapBrand').value.trim();
+  const model=document.getElementById('nLapModel').value.trim();
+  const loc=document.getElementById('nLapLoc').value.trim();
+  if(!id||!tag||!sn){alert('ID, Asset Tag and Serial Number are required.');return;}
+  try {
+    const r=await fetch('/api/laptops',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({laptop_id:id,asset_tag:tag,serial_number:sn,brand,model,current_location:loc})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail);
+    alert(`✓ Laptop ${id} added!`);
+    closeAddLaptopModal(); loadLaptops(); loadDashboard();
+  } catch(e){alert('Error: '+e.message);}
+}
+
+// ── CAMERA QR ──
+function openCam(target) {
+  camTarget=target;
+  document.getElementById('camModal').classList.remove('hidden');
+  if(html5Qr) html5Qr.clear();
+  html5Qr = new Html5Qrcode('qrReader');
+  html5Qr.start({facingMode:'environment'},{fps:10,qrbox:{width:250,height:250}},
+    text=>{ handleQrScan(text); closeCam(); },
+    ()=>{}
+  ).catch(err=>{ alert('Camera unavailable: '+err); closeCam(); });
+}
+function closeCam() {
+  if(html5Qr) html5Qr.stop().then(()=>html5Qr.clear()).catch(()=>{});
+  document.getElementById('camModal').classList.add('hidden');
+}
+function handleQrScan(text) {
+  const clean = text.replace(/^QR-/,'');
+  if(camTarget==='person') {
+    document.getElementById('cPersonInput').value = clean;
+    handlePersonSearch(clean);
+  } else if(camTarget==='laptop') {
+    document.getElementById('cLaptopInput').value = clean;
+  }
+}
+
+// ── HELPERS ──
+function fmtDate(s) {
+  if(!s) return '';
+  try {
+    const d=new Date(s);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+
+           d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  } catch{ return s; }
+}
+function statusBadge(s) {
+  return s==='Available'?'bg-emerald-100 text-emerald-800':
+         s==='Issued'?'bg-blue-100 text-blue-800':'bg-amber-100 text-amber-800';
+}
+function actionBadge(a) {
+  return a==='ISSUE'?'bg-blue-100 text-blue-700':
+         a==='RETURN'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700';
+}
+function ackBadge(a) {
+  return a==='ACKNOWLEDGED'?'bg-emerald-100 text-emerald-700':
+         a==='PENDING'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600';
+}
+</script>
+</body>
+</html>
